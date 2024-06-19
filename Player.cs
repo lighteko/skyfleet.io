@@ -19,5 +19,4 @@ public class Player : MonoBehaviour
         Vector3 currentPosition = transform.position;
         transform.position = new Vector3(currentPosition.x + direction.x * speed, currentPosition.y + direction.y * speed, 0);
     }
-
 }

@@ -5,10 +5,10 @@ public class Jet : MonoBehaviour
 {
     void FixedUpdate()
     {
-        rotateToMouseCursor();
+        RotateToMouseCursor();
     }
 
-    void rotateToMouseCursor()
+    void RotateToMouseCursor()
     {
         Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector3 direction = mousePosition - transform.position;
