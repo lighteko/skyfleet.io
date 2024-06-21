@@ -1,4 +1,3 @@
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class Player : MonoBehaviour
@@ -14,6 +13,7 @@ public class Player : MonoBehaviour
 
     void MoveTowardsMouse()
     {
+        speed *= 0.1f;
         Vector2 worldMousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector3 direction = ((Vector3)worldMousePosition - transform.position).normalized;
         Vector3 currentPosition = transform.position;
