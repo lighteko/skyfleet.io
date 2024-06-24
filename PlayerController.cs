@@ -1,7 +1,6 @@
 using UnityEngine;
-using Unity.Netcode;
 
-public class PlayerController : NetworkBehaviour
+public class PlayerController : MonoBehaviour 
 {
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     public float speed = 0;
@@ -9,7 +8,6 @@ public class PlayerController : NetworkBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        if (!IsOwner) return;
         Vector2 worldMousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector3 direction = ((Vector3)worldMousePosition - transform.position).normalized;
         angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
