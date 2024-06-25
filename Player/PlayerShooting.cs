@@ -39,9 +39,10 @@ public class PlayerShooting : NetworkBehaviour
         if (!IsOwner) ExecuteShoot(dir);
     }
 
-    private void OnTriggerEnter2D(Collider2D collider) {
-        Debug.Log("Collision Detected");
-        Debug.Log(collider.transform.GetComponent<Bullet>().Shooter.GetComponent<PlayerTransform>().Id.Value);
+    private void OnTriggerEnter2D(Collider2D collider)
+    {
+        if (collider.transform.CompareTag("Projectile"))
+            Debug.Log(collider.transform.GetComponent<Bullet>().Shooter.GetComponent<PlayerTransform>().Id.Value);
     }
 
     private void ExecuteShoot(Vector3 dir)

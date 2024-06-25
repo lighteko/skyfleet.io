@@ -13,7 +13,8 @@ public class Bullet : MonoBehaviour, IShootable
     }
 
     private void OnTriggerEnter2D(Collider2D collider) {
-        if (collider.transform != _shooter && collider.transform.CompareTag("Player")) DestroyProjectile();
+        if (collider.transform != _shooter && collider.transform.CompareTag("Player")) 
+            DestroyProjectile();
     }
 
     public void DestroyProjectile()
