@@ -14,11 +14,12 @@ public class PlayerController : MonoBehaviour
         Vector2 newMousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
         // when the user does not move the mouse, keep the direction.
-        if (newMousePosition != _worldMousePosition) {
+        if (newMousePosition != _worldMousePosition)
+        {
             _worldMousePosition = newMousePosition;
-            _direction = (Vector3) _worldMousePosition - transform.position;
+            _direction = (Vector3)_worldMousePosition - transform.position;
         }
-        
+
         Vector3 normal = _direction.normalized;
 
         _angle = (short)(Mathf.Atan2(normal.y, normal.x) * Mathf.Rad2Deg);
