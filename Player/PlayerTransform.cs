@@ -28,7 +28,6 @@ public class PlayerTransform : NetworkBehaviour
     {
         if (!IsOwner) Destroy(transform.GetComponent<PlayerController>());
         SendIdServerRpc($"Player {OwnerClientId}");
-
     }
 
     private void FixedUpdate()

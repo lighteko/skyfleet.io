@@ -12,13 +12,13 @@ public class Bullet : MonoBehaviour, IShootable
         Invoke(nameof(DestroyProjectile), 3);
     }
 
-    private void OnTriggerEnter2D(Collider2D collider) {
-        if (collider.transform != _shooter && collider.transform.CompareTag("Player")) 
-            DestroyProjectile();
-    }
-
     public void DestroyProjectile()
     {
         Destroy(gameObject);
+    }
+
+    public void OnTriggerEnter2D(Collider2D col) {
+        if (col.transform != _shooter && col.transform.CompareTag("Player")) 
+            DestroyProjectile();
     }
 }
