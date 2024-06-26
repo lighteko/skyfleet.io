@@ -6,25 +6,25 @@ public class PlayerController : MonoBehaviour
     private short _angle = 0;
     private Vector3 _direction;
     private Vector2 _worldMousePosition;
+    private Camera _playerCam;
 
     public float Speed { get => _speed; set => _speed = value; }
 
+    void Start()
+    {
+        _playerCam = transform.GetChild(1).GetComponent<Camera>();
+    }
+
     void FixedUpdate()
     {
-        Vector2 newMousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-
-        // when the user does not move the mouse, keep the direction.
-        if (newMousePosition != _worldMousePosition)
-        {
-            _worldMousePosition = newMousePosition;
-            _direction = (Vector3)_worldMousePosition - transform.position;
-        }
+        _worldMousePosition = _playerCam.ScreenToWorldPoint(Input.mousePosition); ;
+        _direction = (Vector3)_worldMousePosition - transform.position;
 
         Vector3 normal = _direction.normalized;
 
         _angle = (short)(Mathf.Atan2(normal.y, normal.x) * Mathf.Rad2Deg);
 
-        MoveTowardMouse(transform.position, normal, Speed * 0.01f, _angle);
+        MoveTowardMouse(transform.position, normal, Speed * 0.1f, _angle);
     }
 
     public void MoveTowardMouse(Vector3 pos, Vector3 dir, float speed, short angle)
