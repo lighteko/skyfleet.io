@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Bullet : MonoBehaviour, IShootable
+public class Projectile : MonoBehaviour, IShootable
 {
     private Transform _shooter;
 
@@ -18,8 +18,10 @@ public class Bullet : MonoBehaviour, IShootable
     }
 
     public void OnTriggerEnter2D(Collider2D col)
-    {
+    {   
+        if (col.transform.CompareTag("Wall")) DestroyProjectile();
         if (col.transform != _shooter && col.transform.CompareTag("Player"))
             DestroyProjectile();
+
     }
 }
