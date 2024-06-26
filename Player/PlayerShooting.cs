@@ -38,7 +38,7 @@ public class PlayerShooting : NetworkBehaviour
     private void OnTriggerEnter2D(Collider2D collider)
     {
         if (collider.transform.CompareTag("Projectile"))
-            Debug.Log(collider.transform.GetComponent<Bullet>().Shooter.GetComponent<PlayerTransform>().Id.Value);
+            Debug.Log(collider.transform.GetComponent<Bullet>().Shooter.GetComponent<PlayerStats>().Id.Value);
     }
 
     private void ExecuteShoot(Vector3 dir)

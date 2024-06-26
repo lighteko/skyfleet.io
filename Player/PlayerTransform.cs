@@ -1,6 +1,5 @@
 using UnityEngine;
 using Unity.Netcode;
-using Unity.Collections;
 
 public class PlayerTransform : NetworkBehaviour
 {
@@ -11,23 +10,18 @@ public class PlayerTransform : NetworkBehaviour
     [SerializeField] private float _cheapInterpolationTime = 0.1f;
     private GameObject _jet;
     private Rigidbody2D _rb;
-    private NetworkVariable<FixedString32Bytes> _id;
-
-    public NetworkVariable<FixedString32Bytes> Id { get => _id; set => _id = value; }
 
     private void Awake()
     {
         _rb = GetComponent<Rigidbody2D>();
         _jet = transform.GetChild(0).gameObject;
-        Id = new();
         var permission = _usingServerAuth ? NetworkVariableWritePermission.Server : NetworkVariableWritePermission.Owner;
-        _playerState = new NetworkVariable<PlayerTransformState>(writePerm: permission);
+        _playerState = new(writePerm: permission);
     }
 
     public override void OnNetworkSpawn()
     {
         if (!IsOwner) Destroy(transform.GetComponent<PlayerController>());
-        SendIdServerRpc($"Player {OwnerClientId}");
     }
 
     private void FixedUpdate()
@@ -45,12 +39,6 @@ public class PlayerTransform : NetworkBehaviour
         };
         if (IsServer || !_usingServerAuth) _playerState.Value = state;
         else TransmitStateServerRpc(state);
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    public void SendIdServerRpc(string id)
-    {
-        Id.Value = id;
     }
 
     [ServerRpc]
