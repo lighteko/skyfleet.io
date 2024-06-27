@@ -9,6 +9,7 @@ public class PlayerShooting : NetworkBehaviour
     [SerializeField] private Transform _spawner;
     private float _lastFired = float.MinValue;
     private Camera _playerCam;
+    private PlayerStats _playerStats;
 
     public override void OnNetworkSpawn() {
         if (!IsOwner) Destroy(transform.GetChild(1).gameObject);
@@ -16,6 +17,7 @@ public class PlayerShooting : NetworkBehaviour
     void Start()
     {
         _playerCam = transform.GetChild(1).GetComponent<Camera>();
+        _playerStats = GetComponent<PlayerStats>();
     }
     void Update()
     {
@@ -44,17 +46,11 @@ public class PlayerShooting : NetworkBehaviour
         if (!IsOwner) ExecuteShoot(dir);
     }
 
-    private void OnTriggerEnter2D(Collider2D collider)
-    {
-        Transform obj = collider.transform;
-        if (obj.CompareTag("Projectile") && obj.GetComponent<Projectile>().Shooter != transform)
-            Debug.Log(obj.GetComponent<Projectile>().Shooter.GetComponent<PlayerStats>().Id.Value);
-    }
-
     private void ExecuteShoot(Vector3 dir)
     {
         var bullet = Instantiate(_bullet, _spawner.position, Quaternion.identity);
         bullet.Shooter = transform;
+        bullet.Damage = _playerStats.AttackPower.Value;
         bullet.Shoot(dir, _bulletSpeed);
     }
 }

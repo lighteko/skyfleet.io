@@ -2,17 +2,16 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    [SerializeField] private float _speed;
     private short _angle = 0;
     private Vector3 _direction;
     private Vector2 _worldMousePosition;
     private Camera _playerCam;
-
-    public float Speed { get => _speed; set => _speed = value; }
+    private PlayerStats _playerStats;
 
     void Start()
     {
         _playerCam = transform.GetChild(1).GetComponent<Camera>();
+        _playerStats = GetComponent<PlayerStats>();
     }
 
     void FixedUpdate()
@@ -24,7 +23,7 @@ public class PlayerController : MonoBehaviour
 
         _angle = (short)(Mathf.Atan2(normal.y, normal.x) * Mathf.Rad2Deg);
 
-        MoveTowardMouse(transform.position, normal, Speed * 0.1f, _angle);
+        MoveTowardMouse(transform.position, normal, _playerStats.MovementSpeed.Value * 0.1f, _angle);
     }
 
     public void MoveTowardMouse(Vector3 pos, Vector3 dir, float speed, short angle)
