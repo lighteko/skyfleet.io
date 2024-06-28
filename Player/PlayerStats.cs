@@ -32,9 +32,11 @@ public class PlayerStats : NetworkBehaviour
     #endregion
 
     [SerializeField] private bool _usingServerAuth;
+    private Transform _healthBar;
 
     void Awake()
     {
+        _healthBar = transform.GetChild(2);
         var writePerm = _usingServerAuth ? NetworkVariableWritePermission.Server : NetworkVariableWritePermission.Owner;
         var readPerm = NetworkVariableReadPermission.Everyone;
 
@@ -57,6 +59,8 @@ public class PlayerStats : NetworkBehaviour
     //     // ConsumeFuelServerRpc();
     //     // HealServerRpc();
     // }
+
+    
 
     public override void OnNetworkSpawn()
     {
@@ -168,7 +172,7 @@ public class PlayerStats : NetworkBehaviour
 
     private void OnHealthChanged(short oldHealth, short newHealth)
     {
-        Debug.Log($"Player {OwnerClientId} health changed from {oldHealth} to {newHealth}");
+        _healthBar.GetComponent<HealthBar>().SetHealth(newHealth, MaxHealth);
         if (Health.Value <= 0) DieServerRpc();
     }
 
