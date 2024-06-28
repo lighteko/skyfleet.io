@@ -6,8 +6,8 @@ public class Projectile : MonoBehaviour, IShootable
 
     public Transform Shooter { get => _shooter; set => _shooter = value; }
 
-    private float _damage;
-    public float Damage { get => _damage; set => _damage = value; }
+    private short _damage;
+    public short Damage { get => _damage; set => _damage = value; }
 
     public void Shoot(Vector3 direction, float speed)
     {

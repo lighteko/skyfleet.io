@@ -29,7 +29,6 @@ public class PlayerShooting : NetworkBehaviour
             var dir = (Vector3)worldMousePos - transform.position;
             dir = dir.normalized;
             RequestFireServerRpc(dir);
-
             ExecuteShoot(dir);
         }
     }
@@ -48,9 +47,17 @@ public class PlayerShooting : NetworkBehaviour
 
     private void ExecuteShoot(Vector3 dir)
     {
+        if (_playerStats.Ammo.Value <= 0) {
+            Debug.Log("No ammo left");
+            return;
+        }
         var bullet = Instantiate(_bullet, _spawner.position, Quaternion.identity);
         bullet.Shooter = transform;
         bullet.Damage = _playerStats.AttackPower.Value;
         bullet.Shoot(dir, _bulletSpeed);
+        if (IsOwner) {
+            _playerStats.ConsumeAmmoServerRpc(1);
+            _playerStats.ConsumeAmmo(1);
+        }
     }
 }
