@@ -23,7 +23,7 @@ public class PlayerController : MonoBehaviour
 
         _angle = (short)(Mathf.Atan2(normal.y, normal.x) * Mathf.Rad2Deg);
 
-        MoveTowardMouse(transform.position, normal, _playerStats.MovementSpeed * 0.1f, _angle);
+        MoveTowardMouse(transform.position, normal, _playerStats.MovementSpeed.Value * 0.1f, _angle);
     }
 
     public void MoveTowardMouse(Vector3 pos, Vector3 dir, float speed, short angle)

@@ -12,20 +12,20 @@ public class PlayerStats : NetworkBehaviour
     private NetworkVariable<short> _fuel;
     private NetworkVariable<short> _ammo;
     private NetworkVariable<short> _atk, _def;
-    private short _maxHealth, _maxFuel, _level;
-    private float _healthRegen, _fuelEfficiency, _exp, _movementSpeed;
+    private NetworkVariable<short> _maxHealth, _maxFuel, _level;
+    private NetworkVariable<float> _healthRegen, _fuelEfficiency, _exp, _movementSpeed;
 
     public NetworkVariable<short> Health { get => _health; set => _health = value; }
     public NetworkVariable<short> Fuel { get => _fuel; set => _fuel = value; }
     public NetworkVariable<short> Ammo { get => _ammo; set => _ammo = value; }
 
-    public short MaxHealth { get => _maxHealth; set => _maxHealth = value; }
-    public short MaxFuel { get => _maxFuel; set => _maxFuel = value; }
-    public float HealthRegen { get => _healthRegen; set => _healthRegen = value; }
-    public float FuelEfficiency { get => _fuelEfficiency; set => _fuelEfficiency = value; }
-    public float MovementSpeed { get => _movementSpeed; set => _movementSpeed = value; }
-    public float Exp { get => _exp; set => _exp = value; }
-    public short Level { get => _level; set => _level = value; }
+    public NetworkVariable<short> MaxHealth { get => _maxHealth; set => _maxHealth = value; }
+    public NetworkVariable<short> MaxFuel { get => _maxFuel; set => _maxFuel = value; }
+    public NetworkVariable<float> HealthRegen { get => _healthRegen; set => _healthRegen = value; }
+    public NetworkVariable<float> FuelEfficiency { get => _fuelEfficiency; set => _fuelEfficiency = value; }
+    public NetworkVariable<float> MovementSpeed { get => _movementSpeed; set => _movementSpeed = value; }
+    public NetworkVariable<float> Exp { get => _exp; set => _exp = value; }
+    public NetworkVariable<short> Level { get => _level; set => _level = value; }
     public NetworkVariable<short> AttackPower { get => _atk; set => _atk = value; }
     public NetworkVariable<short> DefencePower { get => _def; set => _def = value; }
 
@@ -39,12 +39,20 @@ public class PlayerStats : NetworkBehaviour
         _healthBar = transform.GetChild(2);
         var writePerm = _usingServerAuth ? NetworkVariableWritePermission.Server : NetworkVariableWritePermission.Owner;
         var readPerm = NetworkVariableReadPermission.Everyone;
+        var ownerPerm = NetworkVariableReadPermission.Owner;
 
         _health = new(readPerm: readPerm, writePerm: writePerm);
         _atk = new(readPerm: readPerm, writePerm: writePerm);
         _def = new(readPerm: readPerm, writePerm: writePerm);
         _fuel = new(readPerm: readPerm, writePerm: writePerm);
         _ammo = new(readPerm: readPerm, writePerm: writePerm);
+        _maxHealth = new(readPerm: readPerm, writePerm: writePerm);
+        _maxFuel = new(readPerm: readPerm, writePerm: writePerm);
+        _level = new(readPerm: readPerm, writePerm: writePerm);
+        _healthRegen = new(readPerm: ownerPerm, writePerm: writePerm);
+        _fuelEfficiency = new(readPerm: ownerPerm, writePerm: writePerm);
+        _movementSpeed = new(readPerm: ownerPerm, writePerm: writePerm);
+        _exp = new(readPerm: ownerPerm, writePerm: writePerm);
         Id = new();
     }
 
@@ -78,16 +86,16 @@ public class PlayerStats : NetworkBehaviour
 
     private void InitializeStats()
     {
-        Health.Value = MaxHealth = 100;
-        Fuel.Value = MaxFuel = 100;
+        Health.Value = MaxHealth.Value = 100;
+        Fuel.Value = MaxFuel.Value = 100;
         Ammo.Value = 10;
         AttackPower.Value = 10;
         DefencePower.Value = 5;
-        MovementSpeed = 0.2f;
-        HealthRegen = 0.8f;
-        FuelEfficiency = 0.2f;
-        Exp = 0;
-        Level = 0;
+        MovementSpeed.Value = 0.2f;
+        HealthRegen.Value = 0.8f;
+        FuelEfficiency.Value = 0.2f;
+        Exp.Value = 0;
+        Level.Value = 0;
     }
 
     // #region level
@@ -172,7 +180,8 @@ public class PlayerStats : NetworkBehaviour
 
     private void OnHealthChanged(short oldHealth, short newHealth)
     {
-        _healthBar.GetComponent<HealthBar>().SetHealth(newHealth, MaxHealth);
+        _healthBar.GetComponent<HealthBar>().SetHealth(newHealth, MaxHealth.Value);
+        Debug.Log($"Player {OwnerClientId} remaining {newHealth} health");
         if (Health.Value <= 0) DieServerRpc();
     }
 
