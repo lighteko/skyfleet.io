@@ -33,10 +33,12 @@ public class PlayerStats : NetworkBehaviour
 
     [SerializeField] private bool _usingServerAuth;
     private Transform _healthBar;
+    private Transform _fuelBar;
 
     void Awake()
     {
         _healthBar = transform.GetChild(2);
+        _fuelBar = transform.GetChild(3);
         var writePerm = _usingServerAuth ? NetworkVariableWritePermission.Server : NetworkVariableWritePermission.Owner;
         var readPerm = NetworkVariableReadPermission.Everyone;
         var ownerPerm = NetworkVariableReadPermission.Owner;
@@ -178,11 +180,15 @@ public class PlayerStats : NetworkBehaviour
         Health.Value -= damage;
     }
 
-    private void OnHealthChanged(short oldHealth, short newHealth)
+    private void OnHealthChanged(short _, short newHealth)
     {
         _healthBar.GetComponent<HealthBar>().SetHealth(newHealth, MaxHealth.Value);
-        Debug.Log($"Player {OwnerClientId} remaining {newHealth} health");
         if (Health.Value <= 0) DieServerRpc();
+    }
+    private void OnFuelChanged(short _, short newFuel)
+    {
+        _fuelBar.GetComponent<FuelBar>().SetFuel(newFuel, MaxFuel.Value);
+        if (Fuel.Value <= 0) DieServerRpc();
     }
 
     [ServerRpc]
