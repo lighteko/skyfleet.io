@@ -68,7 +68,7 @@ public class PlayerStats : NetworkBehaviour
     //     // HealServerRpc();
     // }
 
-    
+
 
     public override void OnNetworkSpawn()
     {
@@ -88,7 +88,7 @@ public class PlayerStats : NetworkBehaviour
     {
         Health.Value = MaxHealth.Value = 100;
         Fuel.Value = MaxFuel.Value = 100;
-        Ammo.Value = 10;
+        Ammo.Value = 20;
         AttackPower.Value = 10;
         DefencePower.Value = 5;
         MovementSpeed.Value = 0.2f;
