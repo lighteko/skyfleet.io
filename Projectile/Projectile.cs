@@ -17,7 +17,8 @@ public class Projectile : MonoBehaviour, IShootable
     {
         if (IsOutOfRange()) DestroyProjectile();
     }
-    public bool IsOutOfRange() {
+    public bool IsOutOfRange()
+    {
         if (_startPos == null) return false;
         return Vector3.Distance(_startPos, transform.position) > Range;
     }
@@ -33,10 +34,9 @@ public class Projectile : MonoBehaviour, IShootable
     }
 
     public void OnTriggerEnter2D(Collider2D col)
-    {   
+    {
         if (col.transform.CompareTag("Wall")) DestroyProjectile();
         if (col.transform != _shooter && col.transform.CompareTag("Player"))
             DestroyProjectile();
-
     }
 }
