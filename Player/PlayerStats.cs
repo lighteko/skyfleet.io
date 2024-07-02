@@ -34,12 +34,14 @@ public class PlayerStats : NetworkBehaviour
     [SerializeField] private bool _usingServerAuth;
     private Transform _healthBar;
     private Transform _fuelBar;
+    private Transform _levelBar;
     private Transform _lastHit;
 
     void Awake()
     {
-        _healthBar = transform.GetChild(2);
-        _fuelBar = transform.GetChild(3);
+        _healthBar = transform.GetChild(1);
+        _fuelBar = transform.GetChild(2);
+        _levelBar = transform.GetChild(3).GetChild(1);
         var writePerm = _usingServerAuth ? NetworkVariableWritePermission.Server : NetworkVariableWritePermission.Owner;
         var readPerm = NetworkVariableReadPermission.Everyone;
         var ownerPerm = NetworkVariableReadPermission.Owner;
@@ -124,17 +126,19 @@ public class PlayerStats : NetworkBehaviour
 
     private void OnExpChanged(float _, float newExp)
     {
+        Debug.Log("Called!");
         float threshold = 100 * Mathf.Pow(1.25f, Level.Value + 1);
         if (newExp >= threshold)
         {
             Level.Value++;
             Exp.Value = newExp - threshold;
         }
-        // TODO: update exp bar
+        _levelBar.GetComponent<LevelBar>().SetExp(Level.Value, newExp, threshold);
     }
 
     private void OnLevelChanged(short _, short newLevel)
     {
+        float threshold = 100 * Mathf.Pow(1.25f, newLevel + 1);
         if (newLevel % 5 == 0)
         {
             // TODO: Special upgrade
@@ -148,6 +152,8 @@ public class PlayerStats : NetworkBehaviour
         MaxFuel.Value = (short)(maxFuel + 25 * newLevel);
         AttackPower.Value = (short)(atk + 10);
         DefencePower.Value = (short)(def + 10);
+
+        _levelBar.GetComponent<LevelBar>().SetExp(newLevel, Exp.Value, threshold);
     }
 
     #endregion

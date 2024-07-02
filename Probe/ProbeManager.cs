@@ -1,6 +1,5 @@
 using UnityEngine;
 using Unity.Netcode;
-using System;
 
 public class ProbeManager : NetworkBehaviour
 {
@@ -43,7 +42,7 @@ public class ProbeManager : NetworkBehaviour
     {
         if (!IsOwner) return;
         Transform obj = collider.transform;
-        if (obj.CompareTag("Projectile") && obj.GetComponent<Projectile>().Shooter != transform)
+        if (obj.CompareTag("Projectile"))
         {
             _lastHit = obj.GetComponent<Projectile>().Shooter;
             short damage = obj.GetComponent<Projectile>().Damage;
@@ -74,7 +73,7 @@ public class ProbeManager : NetworkBehaviour
                 Killer = _lastHit.GetComponent<PlayerStats>().OwnerClientId,
                 Fuel = 100,
                 Ammo = 20,
-                Exp = 100
+                Exp = 10
             };
             OnKilledServerRpc(state);
         }
@@ -91,10 +90,7 @@ public class ProbeManager : NetworkBehaviour
         killer.AddFuelServerRpc(state.Fuel);
         killer.AddAmmoServerRpc(state.Ammo);
         killer.AddExpServerRpc(state.Exp);
-        Debug.Log($"Player {state.Killer} killed a probe");
-        Debug.Log($"Acquired: \nFuel: {state.Fuel}, \nAmmo: {state.Ammo}, \nExp: {state.Exp}");
     }
-
     #endregion
 
     #region states

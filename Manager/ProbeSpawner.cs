@@ -3,15 +3,15 @@ using UnityEngine;
 
 public class ProbeSpawner : MonoBehaviour
 {
-    public GameObject npcPrefab;
+    public GameObject probe;
     void Start()
     {
-        NetworkManager.Singleton.OnServerStarted += SpawnNPC;
+        NetworkManager.Singleton.OnServerStarted += SpawnProbe;
     }
 
-    private void SpawnNPC()
+    private void SpawnProbe()
     {
-        GameObject npc = Instantiate(npcPrefab, new Vector3(0, 0, 0), Quaternion.identity);
+        GameObject npc = Instantiate(probe, new Vector3(0, 0, 0), Quaternion.identity);
         npc.GetComponent<NetworkObject>().Spawn();
     }
 }

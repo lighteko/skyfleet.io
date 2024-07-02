@@ -21,7 +21,10 @@ public class PlayerTransform : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        if (!IsOwner) Destroy(transform.GetComponent<PlayerController>());
+        if (!IsOwner) {
+            Destroy(transform.GetComponent<PlayerController>());
+            Destroy(transform.GetChild(3).gameObject);
+        }
     }
 
     private void FixedUpdate()

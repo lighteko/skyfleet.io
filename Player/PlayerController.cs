@@ -10,7 +10,7 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
-        _playerCam = transform.GetChild(1).GetComponent<Camera>();
+        _playerCam = transform.GetChild(3).GetChild(0).GetComponent<Camera>();
         _playerStats = GetComponent<PlayerStats>();
     }
 
