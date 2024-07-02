@@ -34,6 +34,7 @@ public class PlayerStats : NetworkBehaviour
     [SerializeField] private bool _usingServerAuth;
     private Transform _healthBar;
     private Transform _fuelBar;
+    private Transform _lastHit;
 
     void Awake()
     {
@@ -200,6 +201,19 @@ public class PlayerStats : NetworkBehaviour
     private void Die()
     {
         if (!IsServer) return;
+        if (_lastHit != null)
+        {
+            var state = new PlayerDropState
+            {
+                Id = OwnerClientId,
+                Killer = _lastHit.GetComponent<PlayerStats>().OwnerClientId,
+                Fuel = Fuel.Value,
+                Ammo = Ammo.Value,
+                Level = Level.Value,
+                Exp = Exp.Value
+            };
+            OnKilledServerRpc(state);
+        }
         GetComponent<NetworkObject>().Despawn();
         Destroy(gameObject);
     }
@@ -210,6 +224,7 @@ public class PlayerStats : NetworkBehaviour
         Transform obj = collider.transform;
         if (obj.CompareTag("Projectile") && obj.GetComponent<Projectile>().Shooter != transform)
         {
+            _lastHit = obj.GetComponent<Projectile>().Shooter;
             short damage = obj.GetComponent<Projectile>().Damage;
             short actualDamage = (short)(damage - DefencePower.Value);
             if (damage < DefencePower.Value) return;
@@ -238,5 +253,46 @@ public class PlayerStats : NetworkBehaviour
     //     if (Fuel.Value <= 0) Die();
     // }
 
+    #endregion
+
+    #region kill
+    [ServerRpc]
+    private void OnKilledServerRpc(PlayerDropState data)
+    {
+        OnKilledClientRpc(data);
+    }
+
+    [ClientRpc]
+    private void OnKilledClientRpc(PlayerDropState data)
+    {
+        if (data.Killer != OwnerClientId) return;
+
+    }
+    #endregion
+
+    #region state
+    private struct PlayerDropState : INetworkSerializable
+    {
+        private short _fuel, _ammo, _level;
+        private float _exp;
+        private ulong _id;
+        private ulong _killer;
+
+        internal ulong Killer { readonly get => _killer; set => _killer = value; }
+        internal ulong Id { readonly get => _id; set => _id = value; }
+        internal short Fuel { readonly get => _fuel; set => _fuel = value; }
+        internal short Ammo { readonly get => _ammo; set => _ammo = value; }
+        internal short Level { readonly get => _level; set => _level = value; }
+        internal float Exp { readonly get => _exp; set => _exp = value; }
+
+        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+        {
+            serializer.SerializeValue(ref _id);
+            serializer.SerializeValue(ref _fuel);
+            serializer.SerializeValue(ref _ammo);
+            serializer.SerializeValue(ref _level);
+            serializer.SerializeValue(ref _exp);
+        }
+    }
     #endregion
 }
