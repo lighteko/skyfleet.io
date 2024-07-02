@@ -22,6 +22,6 @@ public class LevelBar : MonoBehaviour
 
     private void SetLevelText(short level, float exp, float maxExp)
     {
-        _levelText.text = $"Lv.{level} ({exp / maxExp * 100}.2f%)";
+        _levelText.text = $"Lv.{level} ({exp / maxExp * 100:0.00}%)";
     }
 }
