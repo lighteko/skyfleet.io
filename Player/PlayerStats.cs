@@ -71,11 +71,10 @@ public class PlayerStats : NetworkBehaviour
     //     // HealServerRpc();
     // }
 
-
-
     public override void OnNetworkSpawn()
     {
         Health.OnValueChanged += OnHealthChanged;
+        Fuel.OnValueChanged += OnFuelChanged;
         if (!IsOwner) return;
         SendIdServerRpc($"Player {OwnerClientId}");
         InitializeStats();
@@ -99,31 +98,59 @@ public class PlayerStats : NetworkBehaviour
         FuelEfficiency.Value = 0.2f;
         Exp.Value = 0;
         Level.Value = 0;
+
+        Exp.OnValueChanged += OnExpChanged;
+        Level.OnValueChanged += OnLevelChanged;
     }
 
-    // #region level
-    // public void AddExp(float exp)
-    // {
-    //     Exp += exp;
-    //     if (CheckLevelUp()) LevelUp();
-    // }
+    #region level
+    [ServerRpc]
+    public void AddExpServerRpc(float exp)
+    {
+        AddExpClientRpc(exp);
+    }
 
-    // private bool CheckLevelUp()
-    // {
-    //     return Exp >= 100 * Mathf.Pow(1.25f, Level + 1);
-    // }
+    [ClientRpc]
+    public void AddExpClientRpc(float exp)
+    {
+        AddExp(exp);
+    }
 
-    // private void LevelUp()
-    // {
-    //     if (!IsOwner) return;
-    //     Exp = 0;
-    //     Level++;
-    //     Health.Value = MaxHealth;
-    //     Fuel.Value = MaxFuel;
-    //     Debug.Log($"Player {OwnerClientId} leveled up to level {Level}");
-    // }
+    private void AddExp(float exp)
+    {
+        if (!IsOwner) return;
+        Exp.Value += exp;
+    }
 
-    // #endregion
+    private void OnExpChanged(float _, float newExp)
+    {
+        float threshold = 100 * Mathf.Pow(1.25f, Level.Value + 1);
+        if (newExp >= threshold)
+        {
+            Level.Value++;
+            Exp.Value = newExp - threshold;
+        }
+        // TODO: update exp bar
+    }
+
+    private void OnLevelChanged(short _, short newLevel)
+    {
+        if (newLevel % 5 == 0)
+        {
+            // TODO: Special upgrade
+        }
+        short maxHP = MaxHealth.Value;
+        short maxFuel = MaxFuel.Value;
+        short atk = AttackPower.Value;
+        short def = DefencePower.Value;
+
+        MaxHealth.Value = (short)(maxHP + 50 * newLevel);
+        MaxFuel.Value = (short)(maxFuel + 25 * newLevel);
+        AttackPower.Value = (short)(atk + 10);
+        DefencePower.Value = (short)(def + 10);
+    }
+
+    #endregion
 
     #region ammo
 
@@ -134,11 +161,11 @@ public class PlayerStats : NetworkBehaviour
     }
 
     [ClientRpc]
-    public void AddAmmoClientRpc(short ammo)
+    private void AddAmmoClientRpc(short ammo)
     {
         if (!IsOwner) AddAmmo(ammo);
     }
-    public void AddAmmo(short ammo)
+    private void AddAmmo(short ammo)
     {
         if (!IsOwner) return;
         Ammo.Value += ammo;
@@ -150,11 +177,11 @@ public class PlayerStats : NetworkBehaviour
         ConsumeAmmoClientRpc(ammo);
     }
     [ClientRpc]
-    public void ConsumeAmmoClientRpc(short ammo)
+    private void ConsumeAmmoClientRpc(short ammo)
     {
         if (!IsOwner) ConsumeAmmo(ammo);
     }
-    public void ConsumeAmmo(short ammo)
+    private void ConsumeAmmo(short ammo)
     {
         if (Ammo.Value < ammo || !IsOwner) return;
         Ammo.Value -= ammo;
@@ -164,13 +191,13 @@ public class PlayerStats : NetworkBehaviour
 
     #region vitality
     [ServerRpc]
-    public void RequestDamageServerRpc(short damage)
+    public void TakeDamageServerRpc(short damage)
     {
         TakeDamageClientRpc(damage);
     }
 
     [ClientRpc]
-    public void TakeDamageClientRpc(short damage)
+    private void TakeDamageClientRpc(short damage)
     {
         if (!IsOwner) TakeDamage(damage);
     }
@@ -185,6 +212,42 @@ public class PlayerStats : NetworkBehaviour
     {
         _healthBar.GetComponent<HealthBar>().SetHealth(newHealth, MaxHealth.Value);
         if (Health.Value <= 0) DieServerRpc();
+    }
+
+    [ServerRpc]
+    public void ConsumeFuelServerRpc(short consumed)
+    {
+        ConsumeFuelClientRpc(consumed);
+    }
+
+    [ClientRpc]
+    private void ConsumeFuelClientRpc(short consumed)
+    {
+        if (!IsOwner) ConsumeFuel(consumed);
+    }
+
+    private void ConsumeFuel(short consumed)
+    {
+        if (!IsOwner) return;
+        Fuel.Value -= consumed;
+    }
+    
+    [ServerRpc]
+    public void AddFuelServerRpc(short fuel)
+    {
+        AddFuelClientRpc(fuel);
+    }
+
+    [ClientRpc]
+    private void AddFuelClientRpc(short fuel)
+    {
+        if (!IsOwner) AddFuel(fuel);
+    }
+
+    private void AddFuel(short fuel)
+    {
+        if (!IsOwner) return;
+        Fuel.Value += fuel;
     }
     private void OnFuelChanged(short _, short newFuel)
     {
@@ -228,30 +291,10 @@ public class PlayerStats : NetworkBehaviour
             short damage = obj.GetComponent<Projectile>().Damage;
             short actualDamage = (short)(damage - DefencePower.Value);
             if (damage < DefencePower.Value) return;
-            RequestDamageServerRpc(actualDamage);
+            TakeDamageServerRpc(actualDamage);
             TakeDamage(actualDamage);
         }
     }
-
-    // [ServerRpc]
-    // public void HealServerRpc()
-    // {
-    //     Health.Value += (short)(2 * (1 + HealthRegen));
-    //     if (Health.Value > MaxHealth) Health.Value = MaxHealth;
-    // }
-
-    // public void Refuel(short fuel)
-    // {
-    //     Fuel.Value += fuel;
-    //     if (Fuel.Value > MaxFuel) Fuel.Value = MaxFuel;
-    // }
-
-    // [ServerRpc]
-    // public void ConsumeFuelServerRpc()
-    // {
-    //     Fuel.Value -= (short)(1 * (1 - FuelEfficiency));
-    //     if (Fuel.Value <= 0) Die();
-    // }
 
     #endregion
 
@@ -259,15 +302,12 @@ public class PlayerStats : NetworkBehaviour
     [ServerRpc]
     private void OnKilledServerRpc(PlayerDropState data)
     {
-        OnKilledClientRpc(data);
+        var killer = NetworkManager.Singleton.ConnectedClients[data.Killer].PlayerObject.GetComponent<PlayerStats>();
+        killer.AddExpServerRpc(data.Exp * (1 + data.Level));
+        killer.AddFuelServerRpc(data.Fuel);
+        killer.AddAmmoServerRpc(data.Ammo);
     }
 
-    [ClientRpc]
-    private void OnKilledClientRpc(PlayerDropState data)
-    {
-        if (data.Killer != OwnerClientId) return;
-
-    }
     #endregion
 
     #region state
