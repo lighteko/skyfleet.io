@@ -181,7 +181,7 @@ public class PlayerStats : NetworkBehaviour
     {
         if (!IsOwner) ConsumeAmmo(ammo);
     }
-    private void ConsumeAmmo(short ammo)
+    public void ConsumeAmmo(short ammo)
     {
         if (Ammo.Value < ammo || !IsOwner) return;
         Ammo.Value -= ammo;
