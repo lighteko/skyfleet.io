@@ -26,7 +26,7 @@ public class ProbeManager : NetworkBehaviour
 
     #region vital
     [ServerRpc]
-    public void RequestDamageServerRpc(short damage)
+    public void TakeDamageServerRpc(short damage)
     {
         TakeDamage(damage);
     }
@@ -37,6 +37,19 @@ public class ProbeManager : NetworkBehaviour
         short HP = Health.Value.CurrentHP;
         HP -= damage;
         Health.Value = new HealthState { CurrentHP = HP, MaxHealth = Health.Value.MaxHealth };
+    }
+
+    private void OnTriggerEnter2D(Collider2D collider)
+    {
+        if (!IsOwner) return;
+        Transform obj = collider.transform;
+        if (obj.CompareTag("Projectile") && obj.GetComponent<Projectile>().Shooter != transform)
+        {
+            _lastHit = obj.GetComponent<Projectile>().Shooter;
+            short damage = obj.GetComponent<Projectile>().Damage;
+            TakeDamageServerRpc(damage);
+            TakeDamage(damage);
+        }
     }
 
     private void OnHealthChanged(HealthState _, HealthState newHealth)
@@ -78,6 +91,8 @@ public class ProbeManager : NetworkBehaviour
         killer.AddFuelServerRpc(state.Fuel);
         killer.AddAmmoServerRpc(state.Ammo);
         killer.AddExpServerRpc(state.Exp);
+        Debug.Log($"Player {state.Killer} killed a probe");
+        Debug.Log($"Acquired: \nFuel: {state.Fuel}, \nAmmo: {state.Ammo}, \nExp: {state.Exp}");
     }
 
     #endregion
@@ -86,8 +101,8 @@ public class ProbeManager : NetworkBehaviour
     private struct HealthState : INetworkSerializable
     {
         private short _health, _maxHealth;
-        internal short CurrentHP { get => _health; set => _health = value; }
-        internal short MaxHealth { get => _maxHealth; set => _maxHealth = value; }
+        internal short CurrentHP { readonly get => _health; set => _health = value; }
+        internal short MaxHealth { readonly get => _maxHealth; set => _maxHealth = value; }
 
         void INetworkSerializable.NetworkSerialize<T>(BufferSerializer<T> serializer)
         {
@@ -101,10 +116,10 @@ public class ProbeManager : NetworkBehaviour
         private ulong _killer;
         private short _fuel, _ammo, _exp;
 
-        internal ulong Killer { get => _killer; set => _killer = value; }
-        internal short Fuel { get => _fuel; set => _fuel = value; }
-        internal short Ammo { get => _ammo; set => _ammo = value; }
-        internal short Exp { get => _exp; set => _exp = value; }
+        internal ulong Killer { readonly get => _killer; set => _killer = value; }
+        internal short Fuel { readonly get => _fuel; set => _fuel = value; }
+        internal short Ammo { readonly get => _ammo; set => _ammo = value; }
+        internal short Exp { readonly get => _exp; set => _exp = value; }
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {

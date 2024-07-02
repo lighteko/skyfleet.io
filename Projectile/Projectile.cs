@@ -38,5 +38,7 @@ public class Projectile : MonoBehaviour, IShootable
         if (col.transform.CompareTag("Wall")) DestroyProjectile();
         if (col.transform != _shooter && col.transform.CompareTag("Player"))
             DestroyProjectile();
+        if (col.transform.CompareTag("Probe"))
+            DestroyProjectile();
     }
 }
