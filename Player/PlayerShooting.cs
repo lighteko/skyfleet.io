@@ -51,9 +51,11 @@ public class PlayerShooting : NetworkBehaviour
         bullet.Shooter = transform;
         bullet.Damage = _playerStats.AttackPower.Value;
         bullet.Shoot(dir, _bulletSpeed);
+        var first = bullet.transform.position;
         if (IsOwner) {
             _playerStats.ConsumeAmmoServerRpc(1);
-            _playerStats.ConsumeAmmo(1);
         }
+        var second = bullet.transform.position;
+        Debug.Log($"Bullet Position: {first} -> {second}");
     }
 }

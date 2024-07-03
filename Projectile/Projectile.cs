@@ -15,7 +15,10 @@ public class Projectile : MonoBehaviour, IShootable
 
     public void Update()
     {
-        if (IsOutOfRange()) DestroyProjectile();
+        if (IsOutOfRange())
+        {
+            DestroyProjectile();
+        }
     }
     public bool IsOutOfRange()
     {
@@ -25,6 +28,7 @@ public class Projectile : MonoBehaviour, IShootable
 
     public void Shoot(Vector3 direction, float speed)
     {
+        _startPos = transform.position;
         GetComponent<Rigidbody2D>().AddForce(speed * direction);
     }
 

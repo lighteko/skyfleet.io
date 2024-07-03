@@ -35,6 +35,7 @@ public class PlayerStats : NetworkBehaviour
     private Transform _healthBar;
     private Transform _fuelBar;
     private Transform _levelBar;
+    private Transform _ammoBar;
     private Transform _lastHit;
 
     void Awake()
@@ -42,6 +43,7 @@ public class PlayerStats : NetworkBehaviour
         _healthBar = transform.GetChild(1);
         _fuelBar = transform.GetChild(2);
         _levelBar = transform.GetChild(3).GetChild(1);
+        _ammoBar = transform.GetChild(3).GetChild(2);
         var writePerm = _usingServerAuth ? NetworkVariableWritePermission.Server : NetworkVariableWritePermission.Owner;
         var readPerm = NetworkVariableReadPermission.Everyone;
         var ownerPerm = NetworkVariableReadPermission.Owner;
@@ -92,6 +94,7 @@ public class PlayerStats : NetworkBehaviour
     {
         Health.Value = MaxHealth.Value = 100;
         Fuel.Value = MaxFuel.Value = 100;
+        Ammo.OnValueChanged += OnAmmoChanged;
         Ammo.Value = 20;
         AttackPower.Value = 10;
         DefencePower.Value = 5;
@@ -126,7 +129,6 @@ public class PlayerStats : NetworkBehaviour
 
     private void OnExpChanged(float _, float newExp)
     {
-        Debug.Log("Called!");
         float threshold = 100 * Mathf.Pow(1.25f, Level.Value + 1);
         if (newExp >= threshold)
         {
@@ -165,11 +167,10 @@ public class PlayerStats : NetworkBehaviour
     {
         AddAmmoClientRpc(ammo);
     }
-
     [ClientRpc]
     private void AddAmmoClientRpc(short ammo)
     {
-        if (!IsOwner) AddAmmo(ammo);
+        AddAmmo(ammo);
     }
     private void AddAmmo(short ammo)
     {
@@ -185,12 +186,17 @@ public class PlayerStats : NetworkBehaviour
     [ClientRpc]
     private void ConsumeAmmoClientRpc(short ammo)
     {
-        if (!IsOwner) ConsumeAmmo(ammo);
+        if (IsOwner) ConsumeAmmo(ammo);
     }
-    public void ConsumeAmmo(short ammo)
+    private void ConsumeAmmo(short ammo)
     {
-        if (Ammo.Value < ammo || !IsOwner) return;
+        if (Ammo.Value < ammo) return;
         Ammo.Value -= ammo;
+    }
+
+    public void OnAmmoChanged(short _, short newAmmo)
+    {
+        _ammoBar.GetComponent<AmmoBar>().SetAmmo(newAmmo, 300);
     }
 
     #endregion
@@ -237,7 +243,7 @@ public class PlayerStats : NetworkBehaviour
         if (!IsOwner) return;
         Fuel.Value -= consumed;
     }
-    
+
     [ServerRpc]
     public void AddFuelServerRpc(short fuel)
     {
