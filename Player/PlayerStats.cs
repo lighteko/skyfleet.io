@@ -36,7 +36,7 @@ public class PlayerStats : NetworkBehaviour
     private Transform _fuelBar;
     private Transform _levelBar;
     private Transform _ammoBar;
-    private Transform _lastHit;
+    private ulong? _lastHit = null;
 
     void Awake()
     {
@@ -211,19 +211,29 @@ public class PlayerStats : NetworkBehaviour
     [ClientRpc]
     private void TakeDamageClientRpc(short damage)
     {
-        if (!IsOwner) TakeDamage(damage);
+        if (IsOwner) TakeDamage(damage);
     }
 
     private void TakeDamage(short damage)
     {
-        if (!IsOwner) return;
         Health.Value -= damage;
     }
 
     private void OnHealthChanged(short _, short newHealth)
     {
         _healthBar.GetComponent<HealthBar>().SetHealth(newHealth, MaxHealth.Value);
-        if (Health.Value <= 0) DieServerRpc();
+        if (Health.Value <= 0) {
+            var state = new PlayerDropState
+            {
+                Id = OwnerClientId,
+                Killer = _lastHit,
+                Fuel = Fuel.Value,
+                Ammo = Ammo.Value,
+                Level = Level.Value,
+                Exp = Exp.Value
+            };
+            DieServerRpc(state);
+        }
     }
 
     [ServerRpc]
@@ -235,12 +245,11 @@ public class PlayerStats : NetworkBehaviour
     [ClientRpc]
     private void ConsumeFuelClientRpc(short consumed)
     {
-        if (!IsOwner) ConsumeFuel(consumed);
+        if (IsOwner) ConsumeFuel(consumed);
     }
 
     private void ConsumeFuel(short consumed)
     {
-        if (!IsOwner) return;
         Fuel.Value -= consumed;
     }
 
@@ -253,40 +262,42 @@ public class PlayerStats : NetworkBehaviour
     [ClientRpc]
     private void AddFuelClientRpc(short fuel)
     {
-        if (!IsOwner) AddFuel(fuel);
+        if (IsOwner) AddFuel(fuel);
     }
 
     private void AddFuel(short fuel)
     {
-        if (!IsOwner) return;
         Fuel.Value += fuel;
     }
     private void OnFuelChanged(short _, short newFuel)
     {
         _fuelBar.GetComponent<FuelBar>().SetFuel(newFuel, MaxFuel.Value);
-        if (Fuel.Value <= 0) DieServerRpc();
-    }
-
-    [ServerRpc]
-    private void DieServerRpc()
-    {
-        Die();
-    }
-
-    private void Die()
-    {
-        if (!IsServer) return;
-        if (_lastHit != null)
+        if (Fuel.Value <= 0)
         {
             var state = new PlayerDropState
             {
                 Id = OwnerClientId,
-                Killer = _lastHit.GetComponent<PlayerStats>().OwnerClientId,
+                Killer = _lastHit,
                 Fuel = Fuel.Value,
                 Ammo = Ammo.Value,
                 Level = Level.Value,
                 Exp = Exp.Value
             };
+            DieServerRpc(state);
+        }
+    }
+
+    [ServerRpc]
+    private void DieServerRpc(PlayerDropState state)
+    {
+        Die(state);
+    }
+
+    private void Die(PlayerDropState state)
+    {
+        if (!IsServer) return;
+        if (state.Killer != null)
+        {
             OnKilledServerRpc(state);
         }
         GetComponent<NetworkObject>().Despawn();
@@ -299,12 +310,11 @@ public class PlayerStats : NetworkBehaviour
         Transform obj = collider.transform;
         if (obj.CompareTag("Projectile") && obj.GetComponent<Projectile>().Shooter != transform)
         {
-            _lastHit = obj.GetComponent<Projectile>().Shooter;
+            _lastHit = obj.GetComponent<Projectile>().Shooter.GetComponent<PlayerStats>().OwnerClientId;
             short damage = obj.GetComponent<Projectile>().Damage;
             short actualDamage = (short)(damage - DefencePower.Value);
             if (damage < DefencePower.Value) return;
             TakeDamageServerRpc(actualDamage);
-            TakeDamage(actualDamage);
         }
     }
 
@@ -314,7 +324,9 @@ public class PlayerStats : NetworkBehaviour
     [ServerRpc]
     private void OnKilledServerRpc(PlayerDropState data)
     {
-        var killer = NetworkManager.Singleton.ConnectedClients[data.Killer].PlayerObject.GetComponent<PlayerStats>();
+        Debug.Log("Called");
+        if (data.Killer == null) return;
+        var killer = NetworkManager.Singleton.ConnectedClients[data.Killer.Value].PlayerObject.GetComponent<PlayerStats>();
         killer.AddExpServerRpc(data.Exp * (1 + data.Level));
         killer.AddFuelServerRpc(data.Fuel);
         killer.AddAmmoServerRpc(data.Ammo);
@@ -328,9 +340,9 @@ public class PlayerStats : NetworkBehaviour
         private short _fuel, _ammo, _level;
         private float _exp;
         private ulong _id;
-        private ulong _killer;
+        private ulong? _killer;
 
-        internal ulong Killer { readonly get => _killer; set => _killer = value; }
+        internal ulong? Killer { readonly get => _killer; set => _killer = value; }
         internal ulong Id { readonly get => _id; set => _id = value; }
         internal short Fuel { readonly get => _fuel; set => _fuel = value; }
         internal short Ammo { readonly get => _ammo; set => _ammo = value; }
