@@ -222,7 +222,8 @@ public class PlayerStats : NetworkBehaviour
     private void OnHealthChanged(short _, short newHealth)
     {
         _healthBar.GetComponent<HealthBar>().SetHealth(newHealth, MaxHealth.Value);
-        if (Health.Value <= 0) {
+        if (Health.Value <= 0)
+        {
             var state = new PlayerDropState
             {
                 Id = OwnerClientId,

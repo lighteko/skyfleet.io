@@ -43,7 +43,8 @@ public class PlayerShooting : NetworkBehaviour
 
     private void ExecuteShoot(Vector3 dir)
     {
-        if (_playerStats.Ammo.Value <= 0) {
+        if (_playerStats.Ammo.Value <= 0)
+        {
             Debug.Log("No ammo left");
             return;
         }
@@ -51,7 +52,8 @@ public class PlayerShooting : NetworkBehaviour
         bullet.Shooter = transform;
         bullet.Damage = _playerStats.AttackPower.Value;
         bullet.Shoot(dir, _bulletSpeed);
-        if (IsOwner) {
+        if (IsOwner)
+        {
             _playerStats.ConsumeAmmoServerRpc(1);
         }
     }

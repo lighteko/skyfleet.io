@@ -15,7 +15,7 @@ public class AmmoBar : MonoBehaviour
     public void SetAmmo(short ammo, short maxAmmo)
     {
         if (ammo > maxAmmo) return;
-        float per = (float) ammo / maxAmmo;
+        float per = (float)ammo / maxAmmo;
         _ammo.localScale = new Vector3(per, 1, 1);
         SetAmmoText(ammo, maxAmmo);
     }
