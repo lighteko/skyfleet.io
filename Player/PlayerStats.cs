@@ -1,6 +1,7 @@
 using Unity.Netcode;
 using Unity.Collections;
 using UnityEngine;
+using Unity.VisualScripting;
 
 public class PlayerStats : NetworkBehaviour
 {
@@ -36,7 +37,7 @@ public class PlayerStats : NetworkBehaviour
     private Transform _fuelBar;
     private Transform _levelBar;
     private Transform _ammoBar;
-    private ulong? _lastHit = null;
+    private ulong _lastHit = ulong.MaxValue;
 
     void Awake()
     {
@@ -116,14 +117,13 @@ public class PlayerStats : NetworkBehaviour
     }
 
     [ClientRpc]
-    public void AddExpClientRpc(float exp)
+    private void AddExpClientRpc(float exp)
     {
-        AddExp(exp);
+        if (IsOwner) AddExp(exp);
     }
 
     private void AddExp(float exp)
     {
-        if (!IsOwner) return;
         Exp.Value += exp;
     }
 
@@ -170,11 +170,10 @@ public class PlayerStats : NetworkBehaviour
     [ClientRpc]
     private void AddAmmoClientRpc(short ammo)
     {
-        AddAmmo(ammo);
+        if (IsOwner) AddAmmo(ammo);
     }
     private void AddAmmo(short ammo)
     {
-        if (!IsOwner) return;
         Ammo.Value += ammo;
     }
 
@@ -222,6 +221,7 @@ public class PlayerStats : NetworkBehaviour
     private void OnHealthChanged(short _, short newHealth)
     {
         _healthBar.GetComponent<HealthBar>().SetHealth(newHealth, MaxHealth.Value);
+        if (!IsOwner) return;
         if (Health.Value <= 0)
         {
             var state = new PlayerDropState
@@ -265,7 +265,6 @@ public class PlayerStats : NetworkBehaviour
     {
         if (IsOwner) AddFuel(fuel);
     }
-
     private void AddFuel(short fuel)
     {
         Fuel.Value += fuel;
@@ -273,6 +272,7 @@ public class PlayerStats : NetworkBehaviour
     private void OnFuelChanged(short _, short newFuel)
     {
         _fuelBar.GetComponent<FuelBar>().SetFuel(newFuel, MaxFuel.Value);
+        if (!IsOwner) return;
         if (Fuel.Value <= 0)
         {
             var state = new PlayerDropState
@@ -296,8 +296,8 @@ public class PlayerStats : NetworkBehaviour
 
     private void Die(PlayerDropState state)
     {
-        if (!IsServer) return;
-        if (state.Killer != null)
+
+        if (state.Killer != ulong.MaxValue)
         {
             OnKilledServerRpc(state);
         }
@@ -322,13 +322,13 @@ public class PlayerStats : NetworkBehaviour
     #endregion
 
     #region kill
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     private void OnKilledServerRpc(PlayerDropState data)
     {
         Debug.Log("Called");
-        if (data.Killer == null) return;
-        var killer = NetworkManager.Singleton.ConnectedClients[data.Killer.Value].PlayerObject.GetComponent<PlayerStats>();
-        killer.AddExpServerRpc(data.Exp * (1 + data.Level));
+        if (data.Killer == ulong.MaxValue) return;
+        var killer = NetworkManager.Singleton.ConnectedClients[data.Killer].PlayerObject.GetComponent<PlayerStats>();
+        killer.AddExpServerRpc(data.Exp + 50 * (1 + data.Level));
         killer.AddFuelServerRpc(data.Fuel);
         killer.AddAmmoServerRpc(data.Ammo);
     }
@@ -341,9 +341,9 @@ public class PlayerStats : NetworkBehaviour
         private short _fuel, _ammo, _level;
         private float _exp;
         private ulong _id;
-        private ulong? _killer;
+        private ulong _killer;
 
-        internal ulong? Killer { readonly get => _killer; set => _killer = value; }
+        internal ulong Killer { readonly get => _killer; set => _killer = value; }
         internal ulong Id { readonly get => _id; set => _id = value; }
         internal short Fuel { readonly get => _fuel; set => _fuel = value; }
         internal short Ammo { readonly get => _ammo; set => _ammo = value; }
@@ -357,6 +357,10 @@ public class PlayerStats : NetworkBehaviour
             serializer.SerializeValue(ref _ammo);
             serializer.SerializeValue(ref _level);
             serializer.SerializeValue(ref _exp);
+        }
+        public override readonly string ToString()
+        {
+            return $"Id: {_id}, Fuel: {_fuel}, Ammo: {_ammo}, Level: {_level}, Exp: {_exp}, Killer: {_killer}";
         }
     }
     #endregion
