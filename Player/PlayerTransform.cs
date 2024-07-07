@@ -6,7 +6,6 @@ public class PlayerTransform : NetworkBehaviour
     private NetworkVariable<PlayerTransformState> _playerState;
     private Vector3 _vel;
     private float _rotVel;
-    [SerializeField] private bool _usingServerAuth;
     [SerializeField] private float _cheapInterpolationTime = 0.1f;
     private GameObject _jet;
     private Rigidbody2D _rb;
@@ -15,7 +14,7 @@ public class PlayerTransform : NetworkBehaviour
     {
         _rb = GetComponent<Rigidbody2D>();
         _jet = transform.GetChild(0).gameObject;
-        var permission = _usingServerAuth ? NetworkVariableWritePermission.Server : NetworkVariableWritePermission.Owner;
+        var permission = NetworkVariableWritePermission.Server;
         _playerState = new(writePerm: permission);
     }
 
@@ -41,7 +40,7 @@ public class PlayerTransform : NetworkBehaviour
             Position = _rb.position,
             Rotation = _jet.transform.rotation.eulerAngles
         };
-        if (IsServer || !_usingServerAuth) _playerState.Value = state;
+        if (IsServer) _playerState.Value = state;
         else TransmitStateServerRpc(state);
     }
 
