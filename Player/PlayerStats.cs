@@ -1,7 +1,6 @@
 using Unity.Netcode;
 using Unity.Collections;
 using UnityEngine;
-using Unity.VisualScripting;
 
 public class PlayerStats : NetworkBehaviour
 {
@@ -10,14 +9,14 @@ public class PlayerStats : NetworkBehaviour
 
     #region stats
     private NetworkVariable<short> _health;
-    private NetworkVariable<short> _fuel;
+    private NetworkVariable<float> _fuel;
     private NetworkVariable<short> _ammo;
     private NetworkVariable<short> _atk, _def;
     private NetworkVariable<short> _maxHealth, _maxFuel, _level;
     private NetworkVariable<float> _healthRegen, _fuelEfficiency, _exp, _movementSpeed;
 
     public NetworkVariable<short> Health { get => _health; set => _health = value; }
-    public NetworkVariable<short> Fuel { get => _fuel; set => _fuel = value; }
+    public NetworkVariable<float> Fuel { get => _fuel; set => _fuel = value; }
     public NetworkVariable<short> Ammo { get => _ammo; set => _ammo = value; }
 
     public NetworkVariable<short> MaxHealth { get => _maxHealth; set => _maxHealth = value; }
@@ -38,6 +37,7 @@ public class PlayerStats : NetworkBehaviour
     private Transform _ammoBar;
     private ulong _lastHit = ulong.MaxValue;
 
+    #region initialize
     void Awake()
     {
         _healthBar = transform.GetChild(1);
@@ -74,7 +74,6 @@ public class PlayerStats : NetworkBehaviour
     //     // ConsumeFuelServerRpc();
     //     // HealServerRpc();
     // }
-
     public override void OnNetworkSpawn()
     {
         Health.OnValueChanged += OnHealthChanged;
@@ -82,6 +81,7 @@ public class PlayerStats : NetworkBehaviour
         if (!IsOwner) return;
         SendIdServerRpc($"Player {OwnerClientId}");
         InitializeStats();
+        InvokeRepeating(nameof(ConsumeFuelServerRpc), 1, 1 + FuelEfficiency.Value);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -107,6 +107,7 @@ public class PlayerStats : NetworkBehaviour
         Exp.OnValueChanged += OnExpChanged;
         Level.OnValueChanged += OnLevelChanged;
     }
+    #endregion
 
     #region level
     [ServerRpc]
@@ -199,7 +200,7 @@ public class PlayerStats : NetworkBehaviour
 
     #endregion
 
-    #region vitality
+    #region health
     [ServerRpc]
     public void TakeDamageServerRpc(short damage)
     {
@@ -235,43 +236,47 @@ public class PlayerStats : NetworkBehaviour
             DieServerRpc(state);
         }
     }
+    #endregion
 
+    #region fuel
     [ServerRpc]
-    public void ConsumeFuelServerRpc(short consumed)
+    public void ConsumeFuelServerRpc()
     {
-        ConsumeFuelClientRpc(consumed);
+        ConsumeFuelClientRpc();
     }
 
     [ClientRpc]
-    private void ConsumeFuelClientRpc(short consumed)
+    private void ConsumeFuelClientRpc()
     {
-        if (IsOwner) ConsumeFuel(consumed);
+        if (IsOwner) ConsumeFuel();
     }
 
-    private void ConsumeFuel(short consumed)
+    private void ConsumeFuel()
     {
-        Fuel.Value -= consumed;
+        Fuel.Value -= 2;
     }
 
     [ServerRpc]
-    public void AddFuelServerRpc(short fuel)
+    public void AddFuelServerRpc(float fuel)
     {
         AddFuelClientRpc(fuel);
     }
 
     [ClientRpc]
-    private void AddFuelClientRpc(short fuel)
+    private void AddFuelClientRpc(float fuel)
     {
         if (IsOwner) AddFuel(fuel);
     }
-    private void AddFuel(short fuel)
+    private void AddFuel(float fuel)
     {
-        Fuel.Value += fuel;
+        if (Fuel.Value + fuel > MaxFuel.Value) Fuel.Value = MaxFuel.Value;
+        else Fuel.Value += fuel;
     }
-    private void OnFuelChanged(short _, short newFuel)
+    private void OnFuelChanged(float _, float newFuel)
     {
         _fuelBar.GetComponent<FuelBar>().SetFuel(newFuel, MaxFuel.Value);
         if (!IsOwner) return;
+        Debug.Log("Fuel: " + Fuel.Value);
         if (Fuel.Value <= 0)
         {
             var state = new PlayerDropState
@@ -286,7 +291,9 @@ public class PlayerStats : NetworkBehaviour
             DieServerRpc(state);
         }
     }
+    #endregion
 
+    #region death
     [ServerRpc]
     private void DieServerRpc(PlayerDropState state)
     {
@@ -317,7 +324,6 @@ public class PlayerStats : NetworkBehaviour
             TakeDamageServerRpc(actualDamage);
         }
     }
-
     #endregion
 
     #region kill
@@ -336,14 +342,14 @@ public class PlayerStats : NetworkBehaviour
     #region state
     private struct PlayerDropState : INetworkSerializable
     {
-        private short _fuel, _ammo, _level;
-        private float _exp;
+        private short  _ammo, _level;
+        private float _exp, _fuel;
         private ulong _id;
         private ulong _killer;
 
         internal ulong Killer { readonly get => _killer; set => _killer = value; }
         internal ulong Id { readonly get => _id; set => _id = value; }
-        internal short Fuel { readonly get => _fuel; set => _fuel = value; }
+        internal float Fuel { readonly get => _fuel; set => _fuel = value; }
         internal short Ammo { readonly get => _ammo; set => _ammo = value; }
         internal short Level { readonly get => _level; set => _level = value; }
         internal float Exp { readonly get => _exp; set => _exp = value; }
