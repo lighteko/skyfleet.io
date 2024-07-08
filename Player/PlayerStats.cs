@@ -32,7 +32,6 @@ public class PlayerStats : NetworkBehaviour
 
     #endregion
 
-    [SerializeField] private bool _usingServerAuth;
     private Transform _healthBar;
     private Transform _fuelBar;
     private Transform _levelBar;
@@ -45,7 +44,7 @@ public class PlayerStats : NetworkBehaviour
         _fuelBar = transform.GetChild(2);
         _levelBar = transform.GetChild(3).GetChild(1);
         _ammoBar = transform.GetChild(3).GetChild(2);
-        var writePerm = _usingServerAuth ? NetworkVariableWritePermission.Server : NetworkVariableWritePermission.Owner;
+        var writePerm = NetworkVariableWritePermission.Owner;
         var readPerm = NetworkVariableReadPermission.Everyone;
         var ownerPerm = NetworkVariableReadPermission.Owner;
 
@@ -325,7 +324,6 @@ public class PlayerStats : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void OnKilledServerRpc(PlayerDropState data)
     {
-        Debug.Log("Called");
         if (data.Killer == ulong.MaxValue) return;
         var killer = NetworkManager.Singleton.ConnectedClients[data.Killer].PlayerObject.GetComponent<PlayerStats>();
         killer.AddExpServerRpc(data.Exp + 50 * (1 + data.Level));
