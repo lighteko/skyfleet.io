@@ -4,7 +4,13 @@ using Unity.Netcode;
 public class ProbeManager : NetworkBehaviour
 {
     private NetworkVariable<HealthState> _health;
+    private NetworkVariable<ProbeTransformState> _probeState;
     private Transform _lastHit, _healthBar;
+    private GameObject _jet;
+    private Rigidbody2D _rb;
+    [SerializeField] private float _cheapInterpolationTime = 0.1f;
+    private Vector3 _vel;
+    private float _rotVel;
 
     private NetworkVariable<HealthState> Health { get => _health; set => _health = value; }
     public Transform LastHit { get => _lastHit; set => _lastHit = value; }
@@ -15,12 +21,46 @@ public class ProbeManager : NetworkBehaviour
         var writePerm = NetworkVariableWritePermission.Server;
         _health = new(readPerm: readPerm, writePerm: writePerm);
         _healthBar = transform.GetChild(1);
+        _rb = GetComponent<Rigidbody2D>();
+        _jet = transform.GetChild(0).gameObject;
+        var permission = NetworkVariableWritePermission.Server;
+        _probeState = new(writePerm: permission);
     }
 
     public override void OnNetworkSpawn()
     {
         Health.Value = new HealthState { CurrentHP = 100, MaxHealth = 100 };
         Health.OnValueChanged += OnHealthChanged;
+    }
+
+    private void FixedUpdate()
+    {
+        if (IsOwner) TransmitState();
+        else ConsumeState();
+    }
+
+    private void TransmitState()
+    {
+        var state = new ProbeTransformState
+        {
+            Position = _rb.position,
+            Rotation = _jet.transform.rotation.eulerAngles
+        };
+        if (IsServer) _probeState.Value = state;
+        else TransmitStateServerRpc(state);
+    }
+
+    [ServerRpc]
+    private void TransmitStateServerRpc(ProbeTransformState state)
+    {
+        _probeState.Value = state;
+    }
+
+    private void ConsumeState()
+    {
+        // TODO: Need to change the interpolation method here
+        _rb.MovePosition(Vector3.SmoothDamp(transform.position, _probeState.Value.Position, ref _vel, _cheapInterpolationTime));
+        _jet.transform.rotation = Quaternion.Euler(0, 0, Mathf.SmoothDampAngle(_jet.transform.rotation.eulerAngles.z, _probeState.Value.Rotation.z, ref _rotVel, _cheapInterpolationTime));
     }
 
     #region vital
@@ -123,6 +163,34 @@ public class ProbeManager : NetworkBehaviour
             serializer.SerializeValue(ref _fuel);
             serializer.SerializeValue(ref _ammo);
             serializer.SerializeValue(ref _exp);
+        }
+    }
+        private struct ProbeTransformState : INetworkSerializable
+    {
+        private float _x, _y;
+        private short _zRot;
+
+        internal Vector3 Position
+        {
+            readonly get => new(_x, _y, 0);
+            set
+            {
+                _x = value.x;
+                _y = value.y;
+            }
+        }
+
+        internal Vector3 Rotation
+        {
+            readonly get => new(0, 0, _zRot);
+            set => _zRot = (short)value.z;
+        }
+
+        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+        {
+            serializer.SerializeValue(ref _x);
+            serializer.SerializeValue(ref _y);
+            serializer.SerializeValue(ref _zRot);
         }
     }
     #endregion
