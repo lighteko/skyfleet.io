@@ -19,12 +19,13 @@ public class ProbeAutoPilot : MonoBehaviour
 
         _angle = (short)(Mathf.Atan2(normal.y, normal.x) * Mathf.Rad2Deg);
 
-        MoveToPivot(transform.position, normal, 300, _angle);
+        MoveToPivot(transform.position, normal, 0.05f, _angle);
     }
 
     void Update() {
         if (Vector3.Distance(transform.position, _targetPosition) < 5)
         {
+            Debug.Log("Resetting target position");
             _targetPosition = RandomUtils.GetRandomPosition();
         }
     }

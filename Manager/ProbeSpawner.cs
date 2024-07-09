@@ -8,25 +8,18 @@ public class ProbeSpawner : MonoBehaviour
     private bool _initiated = false;
     void Start()
     {
-        NetworkManager.Singleton.OnServerStarted += SpawnProbes;
+        NetworkManager.Singleton.OnServerStarted += SpawnProbe;
     }
 
-    void Update() {
-        if (_counter < 20 && _initiated) SpawnProbe();
-    }
-
-    private void SpawnProbes()
-    {
-        for (int i = 0; i < 20; i++)
-        {
-            SpawnProbe();
-        }
-        _initiated = true;
+    void FixedUpdate() {
+        if (_counter < 5 && _initiated) SpawnProbe();
     }
     private void SpawnProbe()
     {
+        Debug.Log("Spawning probe");
         GameObject probe = Instantiate(_probe, RandomUtils.GetRandomPosition(), Quaternion.identity);
         probe.GetComponent<NetworkObject>().Spawn();
         _counter++;
+        _initiated = true;
     }
 }
