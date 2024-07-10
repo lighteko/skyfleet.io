@@ -111,7 +111,7 @@ public class ProbeManager : NetworkBehaviour
             var state = new ProbeDropState
             {
                 Killer = _lastHit.GetComponent<PlayerStats>().OwnerClientId,
-                Fuel = 100,
+                Fuel = 50,
                 Ammo = 20,
                 Exp = 10
             };

@@ -12,8 +12,9 @@ public class ProbeSpawner : MonoBehaviour
     }
 
     void FixedUpdate() {
-        if (_counter < 5 && _initiated) SpawnProbe();
+        if (_counter < 100 && _initiated) SpawnProbe();
     }
+    
     private void SpawnProbe()
     {
         Debug.Log("Spawning probe");

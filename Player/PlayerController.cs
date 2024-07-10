@@ -1,6 +1,7 @@
 using UnityEngine;
+using Unity.Netcode;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : NetworkBehaviour
 {
     private short _angle = 0;
     private Vector3 _direction;
@@ -12,6 +13,10 @@ public class PlayerController : MonoBehaviour
     {
         _playerCam = transform.GetChild(3).GetChild(0).GetComponent<Camera>();
         _playerStats = GetComponent<PlayerStats>();
+    }
+
+    public override void OnNetworkSpawn() {
+        transform.position = RandomUtils.GetRandomPosition();
     }
 
     void FixedUpdate()

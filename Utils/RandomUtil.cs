@@ -16,6 +16,7 @@ class RandomUtils
     {
         return gradient * (x - a.x) + a.y;
     }
+    
     private static bool IsHigherThanLine(Vector3 pos, Vector3 a, Vector3 b)
     {
         float grad = (b.y - a.y) / (b.x - a.x);
@@ -42,7 +43,7 @@ class RandomUtils
         Vector3 pos;
         do
         {
-            pos = new Vector3(Random.Range(-160, 160), Random.Range(-200, 200), 0);
+            pos = new Vector3(Random.Range(-250, 250), Random.Range(-250, 250), 0);
         } while (!IsInHexagon(pos));
         return pos;
     }

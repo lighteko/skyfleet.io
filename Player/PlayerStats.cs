@@ -81,7 +81,7 @@ public class PlayerStats : NetworkBehaviour
         if (!IsOwner) return;
         SendIdServerRpc($"Player {OwnerClientId}");
         InitializeStats();
-        InvokeRepeating(nameof(ConsumeFuelServerRpc), 1, 1 + FuelEfficiency.Value);
+        InvokeRepeating(nameof(ConsumeFuelServerRpc), 1, 0.3f + FuelEfficiency.Value);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -98,7 +98,7 @@ public class PlayerStats : NetworkBehaviour
         Ammo.Value = 20;
         AttackPower.Value = 10;
         DefencePower.Value = 5;
-        MovementSpeed.Value = 0.2f;
+        MovementSpeed.Value = 0.5f;
         HealthRegen.Value = 0.8f;
         FuelEfficiency.Value = 0.2f;
         Exp.Value = 0;
@@ -276,7 +276,6 @@ public class PlayerStats : NetworkBehaviour
     {
         _fuelBar.GetComponent<FuelBar>().SetFuel(newFuel, MaxFuel.Value);
         if (!IsOwner) return;
-        Debug.Log("Fuel: " + Fuel.Value);
         if (Fuel.Value <= 0)
         {
             var state = new PlayerDropState
