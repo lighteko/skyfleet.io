@@ -49,9 +49,8 @@ public class PlayerShooting : NetworkBehaviour
             return;
         }
         var bullet = Instantiate(_bullet, _spawner.position, Quaternion.identity);
-        bullet.Shooter = transform;
-        bullet.Damage = _playerStats.AttackPower.Value;
-        bullet.Shoot(dir, _bulletSpeed);
+        bullet.Initialize(transform, Projectile.ProjectileType.Bullet, _bulletSpeed);
+        bullet.Shoot(dir);
         if (IsOwner)
         {
             _playerStats.ConsumeAmmoServerRpc(1);
