@@ -13,26 +13,26 @@ public class Projectile : MonoBehaviour, IShootable
     public short Damage { get => _damage; private set => _damage = value; }
     public short Range { get => _range; private set => _range = value; }
     public float Speed { get => _speed; private set => _speed = value; }
-    public enum ProjectileType { Null, Bullet, Missile }
-    public ProjectileType type = ProjectileType.Null;
+    public enum Type { Null, Bullet, Missile }
+    public Type type = Type.Null;
     private bool _initialized = false;
 
-    public void Initialize(Transform shooter, ProjectileType p_type, float speed)
+    public void Initialize(Transform shooter, Type p_type, float speed)
     {
         Shooter = shooter;
         type = p_type;
         short atk = shooter.GetComponent<PlayerStats>().AttackPower.Value;
         switch (p_type)
         {
-            case ProjectileType.Bullet:
+            case Type.Bullet:
                 Damage = atk;
-                Range = 5;
+                Range = 10;
                 Speed = 700 * speed;
                 break;
-            case ProjectileType.Missile:
+            case Type.Missile:
                 Damage = (short)(atk * 2);
                 Range = 20;
-                Speed = 2000;
+                Speed = 1500;
                 break;
             default:
                 break;

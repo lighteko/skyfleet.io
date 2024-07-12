@@ -4,7 +4,7 @@ using UnityEngine;
 public class PlayerShooting : NetworkBehaviour
 {
     [SerializeField] private Projectile _bullet;
-    [SerializeField] private float _bulletSpeed;
+    private float _bulletSpeed = 1f;
     [SerializeField] private float _cooldown = 0.5f;
     [SerializeField] private Transform _spawner;
     private float _lastFired = float.MinValue;
@@ -49,7 +49,7 @@ public class PlayerShooting : NetworkBehaviour
             return;
         }
         var bullet = Instantiate(_bullet, _spawner.position, Quaternion.identity);
-        bullet.Initialize(transform, Projectile.ProjectileType.Bullet, _bulletSpeed);
+        bullet.Initialize(transform, Projectile.Type.Missile, _bulletSpeed);
         bullet.Shoot(dir);
         if (IsOwner)
         {
