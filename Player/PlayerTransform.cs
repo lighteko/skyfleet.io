@@ -20,10 +20,12 @@ public class PlayerTransform : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        if (IsServer) transform.position = RandomUtils.GetRandomPosition();
         if (!IsOwner)
         {
             Destroy(transform.GetComponent<PlayerController>());
             Destroy(transform.GetChild(3).gameObject);
+
         }
     }
 

@@ -49,7 +49,7 @@ public class PlayerShooting : NetworkBehaviour
             return;
         }
         var bullet = Instantiate(_bullet, _spawner.position, Quaternion.identity);
-        bullet.Initialize(transform, Projectile.Type.Missile, _bulletSpeed);
+        bullet.Initialize(transform, Projectile.Type.Bullet, _bulletSpeed);
         bullet.Shoot(dir);
         if (IsOwner)
         {
