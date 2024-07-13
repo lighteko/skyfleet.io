@@ -1,6 +1,7 @@
 using UnityEngine;
+using Unity.Netcode;
 
-public class ProbeAutoPilot : MonoBehaviour
+public class ProbeAutoPilot : NetworkBehaviour
 {
     private short _angle = 0;
     private Vector3 _direction;
@@ -13,6 +14,15 @@ public class ProbeAutoPilot : MonoBehaviour
 
     void FixedUpdate()
     {
+        AutoPilot();
+    }
+
+    void Update() {
+        if (Vector3.Distance(transform.position, _targetPosition) < 5) ResetTargetPosition();
+    }
+
+    private void AutoPilot() {
+        if (!IsServer) return;
         _direction = _targetPosition - transform.position;
 
         Vector3 normal = _direction.normalized;
@@ -22,15 +32,12 @@ public class ProbeAutoPilot : MonoBehaviour
         MoveToPivot(transform.position, normal, 0.05f, _angle);
     }
 
-    void Update() {
-        if (Vector3.Distance(transform.position, _targetPosition) < 5)
-        {
-            Debug.Log("Resetting target position");
-            _targetPosition = RandomUtils.GetRandomPosition();
-        }
+    private void ResetTargetPosition() {
+        if (!IsServer) return;
+        _targetPosition = RandomUtils.GetRandomPosition();
     }
 
-    public void MoveToPivot(Vector3 pos, Vector3 dir, float speed, short angle)
+    private void MoveToPivot(Vector3 pos, Vector3 dir, float speed, short angle)
     {
         transform.position = new Vector3(pos.x + dir.x * speed, pos.y + dir.y * speed, 0);
         transform.GetChild(0).transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle - 90));
