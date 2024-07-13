@@ -110,7 +110,7 @@ public class PlayerStats : NetworkBehaviour
     #endregion
 
     #region level
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void AddExpServerRpc(float exp)
     {
         AddExpClientRpc(exp);
@@ -162,7 +162,7 @@ public class PlayerStats : NetworkBehaviour
 
     #region ammo
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void AddAmmoServerRpc(short ammo)
     {
         AddAmmoClientRpc(ammo);
@@ -256,7 +256,7 @@ public class PlayerStats : NetworkBehaviour
         Fuel.Value -= 2;
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void AddFuelServerRpc(float fuel)
     {
         AddFuelClientRpc(fuel);

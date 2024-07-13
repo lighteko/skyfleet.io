@@ -17,25 +17,29 @@ public class ProbeManager : NetworkBehaviour
 
     private void Awake()
     {
-        var readPerm = NetworkVariableReadPermission.Everyone;
-        var writePerm = NetworkVariableWritePermission.Server;
-        _health = new(readPerm: readPerm, writePerm: writePerm);
-        _healthBar = transform.GetChild(1);
         _rb = GetComponent<Rigidbody2D>();
         _jet = transform.GetChild(0).gameObject;
+        _healthBar = transform.GetChild(1);
+        var readPerm = NetworkVariableReadPermission.Everyone;
+        var writePerm = NetworkVariableWritePermission.Server;
         var permission = NetworkVariableWritePermission.Server;
+        _health = new(readPerm: readPerm, writePerm: writePerm);
         _probeState = new(writePerm: permission);
     }
 
     public override void OnNetworkSpawn()
     {
-        Health.Value = new HealthState { CurrentHP = 100, MaxHealth = 100 };
+        if (IsServer) Health.Value = new HealthState { CurrentHP = 100, MaxHealth = 100 };
+        else
+        {
+            Destroy(transform.GetComponent<ProbeAutoPilot>());
+        }
         Health.OnValueChanged += OnHealthChanged;
     }
 
     private void FixedUpdate()
     {
-        if (IsOwner) TransmitState();
+        if (IsServer) TransmitState();
         else ConsumeState();
     }
 
@@ -46,13 +50,6 @@ public class ProbeManager : NetworkBehaviour
             Position = _rb.position,
             Rotation = _jet.transform.rotation.eulerAngles
         };
-        if (IsServer) _probeState.Value = state;
-        else TransmitStateServerRpc(state);
-    }
-
-    [ServerRpc]
-    private void TransmitStateServerRpc(ProbeTransformState state)
-    {
         _probeState.Value = state;
     }
 
@@ -64,15 +61,9 @@ public class ProbeManager : NetworkBehaviour
     }
 
     #region vital
-    [ServerRpc]
-    public void TakeDamageServerRpc(short damage)
-    {
-        TakeDamage(damage);
-    }
 
     private void TakeDamage(short damage)
     {
-        if (!IsServer) return;
         short HP = Health.Value.CurrentHP;
         HP -= damage;
         Health.Value = new HealthState { CurrentHP = HP, MaxHealth = Health.Value.MaxHealth };
@@ -80,13 +71,12 @@ public class ProbeManager : NetworkBehaviour
 
     private void OnTriggerEnter2D(Collider2D collider)
     {
-        if (!IsOwner) return;
+        if (!IsServer) return;
         Transform obj = collider.transform;
         if (obj.CompareTag("Projectile"))
         {
             _lastHit = obj.GetComponent<Projectile>().Shooter;
             short damage = obj.GetComponent<Projectile>().Damage;
-            TakeDamageServerRpc(damage);
             TakeDamage(damage);
         }
     }
@@ -94,18 +84,11 @@ public class ProbeManager : NetworkBehaviour
     private void OnHealthChanged(HealthState _, HealthState newHealth)
     {
         _healthBar.GetComponent<HealthBar>().SetHealth(newHealth.CurrentHP, newHealth.MaxHealth);
-        if (newHealth.CurrentHP <= 0) DieServerRpc();
-    }
-
-    [ServerRpc]
-    private void DieServerRpc()
-    {
-        Die();
+        if (newHealth.CurrentHP <= 0 && IsServer) Die();
     }
 
     private void Die()
     {
-        if (!IsServer) return;
         if (_lastHit != null)
         {
             var state = new ProbeDropState
@@ -115,7 +98,7 @@ public class ProbeManager : NetworkBehaviour
                 Ammo = 20,
                 Exp = 10
             };
-            OnKilledServerRpc(state);
+            OnKilled(state);
         }
         GetComponent<NetworkObject>().Despawn();
         Destroy(gameObject);
@@ -123,8 +106,7 @@ public class ProbeManager : NetworkBehaviour
     #endregion
 
     #region kill
-    [ServerRpc]
-    private void OnKilledServerRpc(ProbeDropState state)
+    private void OnKilled(ProbeDropState state)
     {
         PlayerStats killer = NetworkManager.Singleton.ConnectedClients[state.Killer].PlayerObject.GetComponent<PlayerStats>();
         killer.AddFuelServerRpc(state.Fuel);
@@ -165,7 +147,7 @@ public class ProbeManager : NetworkBehaviour
             serializer.SerializeValue(ref _exp);
         }
     }
-        private struct ProbeTransformState : INetworkSerializable
+    private struct ProbeTransformState : INetworkSerializable
     {
         private float _x, _y;
         private short _zRot;

@@ -1,7 +1,6 @@
 using UnityEngine;
-using Unity.Netcode;
 
-public class ProbeAutoPilot : NetworkBehaviour
+public class ProbeAutoPilot : MonoBehaviour
 {
     private short _angle = 0;
     private Vector3 _direction;
@@ -22,7 +21,6 @@ public class ProbeAutoPilot : NetworkBehaviour
     }
 
     private void AutoPilot() {
-        if (!IsServer) return;
         _direction = _targetPosition - transform.position;
 
         Vector3 normal = _direction.normalized;
@@ -33,7 +31,6 @@ public class ProbeAutoPilot : NetworkBehaviour
     }
 
     private void ResetTargetPosition() {
-        if (!IsServer) return;
         _targetPosition = RandomUtils.GetRandomPosition();
     }
 
