@@ -259,6 +259,7 @@ public class PlayerStats : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void AddFuelServerRpc(float fuel)
     {
+        Debug.Log("Called Server RPC");
         AddFuelClientRpc(fuel);
     }
 

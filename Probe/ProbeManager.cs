@@ -108,6 +108,8 @@ public class ProbeManager : NetworkBehaviour
     #region kill
     private void OnKilled(ProbeDropState state)
     {
+        Debug.Log("Called");
+        Debug.Log(state);
         PlayerStats killer = NetworkManager.Singleton.ConnectedClients[state.Killer].PlayerObject.GetComponent<PlayerStats>();
         killer.AddFuelServerRpc(state.Fuel);
         killer.AddAmmoServerRpc(state.Ammo);
@@ -145,6 +147,11 @@ public class ProbeManager : NetworkBehaviour
             serializer.SerializeValue(ref _fuel);
             serializer.SerializeValue(ref _ammo);
             serializer.SerializeValue(ref _exp);
+        }
+
+        public override readonly string ToString()
+        {
+            return $"Killer: {_killer}, Fuel: {_fuel}, Ammo: {_ammo}, Exp: {_exp}";
         }
     }
     private struct ProbeTransformState : INetworkSerializable

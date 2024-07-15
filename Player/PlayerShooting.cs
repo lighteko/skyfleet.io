@@ -32,6 +32,12 @@ public class PlayerShooting : NetworkBehaviour
     [ServerRpc]
     private void RequestFireServerRpc(Vector3 dir)
     {
+        if (IsServer)
+        {
+            var bullet = Instantiate(_bullet, _spawner.position, Quaternion.identity);
+            bullet.Initialize(transform, Projectile.Type.Bullet, _bulletSpeed);
+            bullet.Shoot(dir);
+        }
         FireClientRpc(dir);
     }
 
